@@ -62,7 +62,7 @@ app.post("/api/user", async (req, res) => {
             conn.query('Insert INTO user SET ?', data, (error, result, fields) => {
                 if (error) {
                     console.log("successfully Run, User Exist")
-                    res.status(409).json({
+                    res.status(200).json({
                         message: "Email Already Exist",
                         name: data.name,
                         email: data.email,
