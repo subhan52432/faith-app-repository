@@ -70,7 +70,7 @@ app.post("/api/user", async (req, res) => {
                     })
                 } else {
                     console.log("successfully Run")
-                    res.status(201).json({
+                    res.status(200).json({
                         message: "User Created Successfully",
                         name: data.name,
                         email: data.email,
@@ -101,14 +101,14 @@ app.post("/api/message", async (req, res) => {
                     res.send(error)
                 } else {
                     if (result.affectedRows === 0) {
-                        res.status(201).json({
+                        res.status(200).json({
                             message: "message already exists",
                             rowAffected: result.affectedRows,
                             submit: 1
                         })
 
                     } else {
-                        res.status(201).json({
+                        res.status(200).json({
                             message: "message received successfully",
                             rowAffected: result.affectedRows,
                             submit: 1
