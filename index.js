@@ -156,6 +156,7 @@ app.get("/api/getUsers", async (req, res) => {
                         responsePayload.pagination = {
                             error: 'none',
                             current: page,
+                            pages: numPages,
                             perPage: numPerPage,
                             previous: page > 0 ? page - 1 : undefined,
                             next: page < numPages - 1 ? page + 1 : undefined
