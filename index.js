@@ -4,6 +4,7 @@ const formData = require('express-form-data')
 const morgan = require('morgan')
 const app = express()
 const con = require('./config')
+const nodemailer = require('nodemailer')
 require('dotenv').config();
 
 var cors = require('cors')
@@ -280,14 +281,14 @@ app.post("/api/updatedetailsportaluser", async (req, res) => {
                         result: []
                     })
                 }
-                else if(results.affectedRows === 0){
+                else if (results.affectedRows === 0) {
                     res.send({
                         error: 'true',
                         msg: "User Not Exist",
                         result: {}
                     })
                 }
-                else{
+                else {
                     res.send({
                         error: 'false',
                         msg: "Updated Successfully",
@@ -357,6 +358,177 @@ app.post("/api/updatepasswordportaluser", async (req, res) => {
         }
     })
 })
+
+// sending-email by email in body ==>> url: /api/sendEmailOtp
+app.post("/api/sendEmailOtp", async (req, res) => {
+    var data = req.body
+
+    await con.getConnection(function (err, conn) {
+        if (err) {
+            res.send(
+                {
+                    error: "true",
+                    msg: "Error Occured in server connection",
+                    result: []
+                }
+            )
+        }
+        else {
+            conn.query(`SELECT email from portaluser WHERE email = '${data.email}'`, (error, results, fields) => {
+                if (error) {
+                    res.send({
+                        error: 'true',
+                        msg: "Error Occured in Query",
+                        result: []
+                    })
+                }
+                else if (results.length === 0) {
+                    res.send({
+                        error: 'true',
+                        msg: "email does not exist",
+                        result: results
+                    })
+                }
+                else {
+                    const otpcode = Math.floor((Math.random() * 1000000) + 1)
+                    conn.query(`INSERT INTO otp SET ?`,{email: data.email, code: otpcode, expiresIn: new Date().getTime() + 300 * 1000}, (error, resultss, fields) => {
+                        if (error) {
+                            res.send({
+                                error: 'true',
+                                msg: "Error Occured in otp Insert Query",
+                                result: []
+                            })
+                        }
+                        else{
+                            mailer(data.email, otpcode)
+                            res.send({
+                                error: 'none',
+                                msg: "please check your Email Id",
+                                result: resultss
+                            })
+                        }
+                    })
+                    
+                }
+                conn.release()
+            })
+        }
+    })
+})
+
+// Validate Otp by email, code in body ==>> url: /api/validateOtp
+app.get("/api/validateOtp", async (req, res) => {
+    var data = req.body
+
+    await con.getConnection(function (err, conn) {
+        if (err) {
+            res.send(
+                {
+                    error: "true",
+                    msg: "Error Occured in server connection",
+                    result: []
+                }
+            )
+        }
+        else{
+            conn.query(`SELECT * from otp WHERE email = '${data.email}' AND code = '${data.code}'`, (error, results, fields) => {
+                if (error) {
+                    res.send({
+                        error: 'true',
+                        msg: "Error Occured in Query",
+                        result: []
+                    })
+                }
+                else if (results.length === 0) {
+                    res.send({
+                        error: 'true',
+                        msg: "Token Invalid",
+                        result: results
+                    })
+                }
+                else if(results){
+                    res.send({
+                        error: 'none',
+                        msg: "Token Validated",
+                        result: results
+                    })
+                    
+                }
+                conn.release()
+            })
+        }
+    })
+})
+
+// Validate Otp by email, code in body ==>> url: /api/changePassword
+app.post("/api/changePassword", async (req, res) => {
+    var data = req.body
+
+    await con.getConnection(function (err, conn) {
+        if (err) {
+            res.send(
+                {
+                    error: "true",
+                    msg: "Error Occured in server connection",
+                    result: []
+                }
+            )
+        } else{
+            conn.query(`UPDATE portaluser SET password = '${data.password}' WHERE email = '${data.email}'`, (error, results, fields) => {
+                if (error) {
+                    res.send({
+                        error: 'true',
+                        msg: "Error Occured in Query",
+                        result: []
+                    })
+                }
+                else if(results.affectedRows === 0){
+                    res.send({
+                        error: 'true',
+                        msg: "something went wrong",
+                        result: results
+                    })
+                }
+                else {
+                    res.send({
+                        error: 'none',
+                        msg: "password Updated Successfully",
+                        result: results
+                    })
+                }
+                conn.release()
+            })
+        }
+    })
+})
+
+//mailer function
+const mailer = (email, otpcode) => {
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'zibbleweb@gmail.com',
+            pass: 'nrllmavnsjiyziik'
+        }
+    })
+
+    var mailOptions = {
+        from: 'zibbleweb@gmail.com',
+        to: 'zibbleweb@gmail.com',
+        subject: 'Sending email using node js',
+        text: `Your Forget password otp is: ${otpcode}`
+    }
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error)
+        } else {
+            console.log('Email sent: ' + info.response)
+        }
+    })
+}
 
 const PORT = process.env.PORT || 5000;
 
