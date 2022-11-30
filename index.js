@@ -231,7 +231,7 @@ app.post("/api/loginportaluser", async (req, res) => {
             ])
         }
         else {
-            conn.query(`SELECT * from portaluser WHERE email = '${data.email}' AND password = '${data.password}'`, (error, results, fields) => {
+            conn.query(`SELECT id, Name, email, phone from portaluser WHERE email = '${data.email}' AND password = '${data.password}'`, (error, results, fields) => {
                 var responsePayload
                 if (error) {
                     responsePayload = {
@@ -391,7 +391,7 @@ app.post("/api/sendEmailOtp", async (req, res) => {
                 }
                 else {
                     const otpcode = Math.floor((Math.random() * 1000000) + 1)
-                    conn.query(`INSERT INTO otp SET ?`,{email: data.email, code: otpcode, expiresIn: new Date().getTime() + 300 * 1000}, (error, resultss, fields) => {
+                    conn.query(`INSERT INTO otp SET ?`, { email: data.email, code: otpcode, expiresIn: new Date().getTime() + 300 * 1000 }, (error, resultss, fields) => {
                         if (error) {
                             res.send({
                                 error: 'true',
@@ -399,7 +399,7 @@ app.post("/api/sendEmailOtp", async (req, res) => {
                                 result: []
                             })
                         }
-                        else{
+                        else {
                             mailer(data.email, otpcode)
                             res.send({
                                 error: 'none',
@@ -408,7 +408,7 @@ app.post("/api/sendEmailOtp", async (req, res) => {
                             })
                         }
                     })
-                    
+
                 }
                 conn.release()
             })
@@ -430,7 +430,7 @@ app.get("/api/validateOtp", async (req, res) => {
                 }
             )
         }
-        else{
+        else {
             conn.query(`SELECT * from otp WHERE email = '${data.email}' AND code = '${data.code}'`, (error, results, fields) => {
                 if (error) {
                     res.send({
@@ -446,13 +446,13 @@ app.get("/api/validateOtp", async (req, res) => {
                         result: results
                     })
                 }
-                else if(results){
+                else if (results) {
                     res.send({
                         error: 'none',
                         msg: "Token Validated",
                         result: results
                     })
-                    
+
                 }
                 conn.release()
             })
@@ -460,7 +460,7 @@ app.get("/api/validateOtp", async (req, res) => {
     })
 })
 
-// Validate Otp by email, code in body ==>> url: /api/changePassword
+// change password by email, password in body ==>> url: /api/changePassword
 app.post("/api/changePassword", async (req, res) => {
     var data = req.body
 
@@ -473,7 +473,7 @@ app.post("/api/changePassword", async (req, res) => {
                     result: []
                 }
             )
-        } else{
+        } else {
             conn.query(`UPDATE portaluser SET password = '${data.password}' WHERE email = '${data.email}'`, (error, results, fields) => {
                 if (error) {
                     res.send({
@@ -482,7 +482,7 @@ app.post("/api/changePassword", async (req, res) => {
                         result: []
                     })
                 }
-                else if(results.affectedRows === 0){
+                else if (results.affectedRows === 0) {
                     res.send({
                         error: 'true',
                         msg: "something went wrong",
@@ -493,6 +493,49 @@ app.post("/api/changePassword", async (req, res) => {
                     res.send({
                         error: 'none',
                         msg: "password Updated Successfully",
+                        result: results
+                    })
+                }
+                conn.release()
+            })
+        }
+    })
+})
+
+// get portaluser name, phone by email in body ==>> url: /api/getPortalUserDetails
+app.get("/api/getPortalUserDetails", async (req, res) => {
+    var data = req.body
+
+    await con.getConnection(function (err, conn) {
+        if (err) {
+            res.send(
+                {
+                    error: "true",
+                    msg: "Error Occured in server connection",
+                    result: []
+                }
+            )
+        }
+        else{
+            conn.query(`SELECT Name, phone from portaluser WHERE email = '${data.email}'`, (error, results, fields) => {
+                if (error) {
+                    res.send({
+                        error: 'true',
+                        msg: "Error Occured in Query",
+                        result: []
+                    })
+                }
+                else if(results.length === 0){
+                    res.send({
+                        error: 'true',
+                        msg: "User not found",
+                        result: results
+                    })
+                }
+                else{
+                    res.send({
+                        error: 'none',
+                        msg: "User Found Successfully",
                         result: results
                     })
                 }
