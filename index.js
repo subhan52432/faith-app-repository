@@ -417,7 +417,7 @@ app.post("/api/sendEmailOtp", async (req, res) => {
 })
 
 // Validate Otp by email, code in body ==>> url: /api/validateOtp
-app.get("/api/validateOtp", async (req, res) => {
+app.post("/api/validateOtp", async (req, res) => {
     var data = req.body
 
     await con.getConnection(function (err, conn) {
@@ -502,9 +502,9 @@ app.post("/api/changePassword", async (req, res) => {
     })
 })
 
-// get portaluser name, phone by email in body ==>> url: /api/getPortalUserDetails
+// get portaluser name, phone by email in body ==>> url: /api/getPortalUserDetails?email=subhan@gmail.com
 app.get("/api/getPortalUserDetails", async (req, res) => {
-    var data = req.body
+    var email = req.query.email
 
     await con.getConnection(function (err, conn) {
         if (err) {
@@ -517,7 +517,7 @@ app.get("/api/getPortalUserDetails", async (req, res) => {
             )
         }
         else{
-            conn.query(`SELECT Name, phone from portaluser WHERE email = '${data.email}'`, (error, results, fields) => {
+            conn.query(`SELECT Name, phone from portaluser WHERE email = '${email}'`, (error, results, fields) => {
                 if (error) {
                     res.send({
                         error: 'true',
